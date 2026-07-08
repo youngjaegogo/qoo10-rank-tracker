@@ -1,0 +1,26 @@
+name: Qoo10 Rank Check
+
+on:
+  schedule:
+    - cron: "0 */2 * * *"   # 2시간마다 (UTC 기준, 간격은 동일)
+  workflow_dispatch: {}       # GitHub 저장소 Actions 탭에서 수동 실행 가능
+
+jobs:
+  check-rank:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run rank check
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: python qoo10_rank_check.py
