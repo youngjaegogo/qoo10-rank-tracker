@@ -1,11 +1,23 @@
 name: Qoo10 Rank Check
 on:
   schedule:
-    - cron: "*/5 * * * *"
+    - cron: "0 */2 * * *"
   workflow_dispatch: {}
 jobs:
-  ping:
+  check-rank:
     runs-on: ubuntu-latest
     steps:
-      - name: Just print time
-        run: date -u
+      - name: Checkout repo
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+      - name: Install Playwright browser
+        run: python -m playwright install --with-deps chromium
+      - name: Run rank check
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: python qoo10_rank_check.py
