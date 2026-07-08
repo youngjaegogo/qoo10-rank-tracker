@@ -34,7 +34,14 @@ def fetch_items_via_browser(url: str, top_n: int):
     with sync_playwright() as p:
         browser = p.chromium.launch(args=["--no-sandbox"])
         page = browser.new_page(user_agent=DESKTOP_UA, locale="ja-JP")
-        page.goto(url, wait_until="networkidle", timeout=60000)
+        # networkidle은 광고/트래킹 스크립트가 계속 통신을 해서 끝까지 기다리면
+        # 타임아웃이 나므로, DOM만 로드되면 바로 진행하고 랭킹 요소가 뜰 때까지만 기다린다.
+        page.goto(url, wait_until="domcontentloaded", timeout=60000)
+        try:
+            page.wait_for_selector("span.rank", timeout=30000)
+        except Exception:
+            pass
+        page.wait_for_timeout(2000)
 
         raw_items = page.evaluate(
             """
