@@ -19,7 +19,7 @@ from playwright.sync_api import sync_playwright
 # ── 설정값 (필요하면 이 부분만 수정) ──────────────────────────────
 TARGET_URL = "https://www.qoo10.jp/gmkt.inc/Bestsellers/?g=2"  # ビューティ 카테고리 랭킹
 TARGET_BRAND = "セラディックス"  # 추적할 브랜드/셀러명
-TOP_N = 50  # 몇 위까지 확인할지
+TOP_N = 100  # 몇 위까지 확인할지
 JST = timezone(timedelta(hours=9))
 # ──────────────────────────────────────────────────────────────
 
