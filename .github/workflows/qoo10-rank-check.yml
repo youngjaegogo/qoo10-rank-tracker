@@ -1,7 +1,7 @@
 name: Qoo10 Rank Check
 on:
   schedule:
-    - cron: "0 */2 * * *"
+    - cron: "*/5 * * * *"
   workflow_dispatch: {}
 jobs:
   check-rank:
