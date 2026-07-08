@@ -30,10 +30,11 @@ HEADERS = {
 }
 
 
-def fetch_html(url: str) -> str:
+def fetch_html(url: str):
     resp = requests.get(url, headers=HEADERS, timeout=30)
+    status = resp.status_code
     resp.raise_for_status()
-    return resp.text
+    return resp.text, status
 
 
 def looks_blocked(html: str) -> bool:
@@ -186,7 +187,7 @@ def main():
     checked_at = datetime.now(JST).strftime("%Y-%m-%d %H:%M")
 
     try:
-        html = fetch_html(TARGET_URL)
+        html, status = fetch_html(TARGET_URL)
         blocked = looks_blocked(html)
         items, method = parse_ranking(html, TOP_N)
         matches = [it for it in items if TARGET_BRAND in it["text"]]
@@ -194,9 +195,11 @@ def main():
         diagnostics = None
         # 파싱된 상품이 하나도 없거나(=사실상 실패), 차단 의심일 때만 진단 정보 첨부
         if not items or blocked:
+            snippet = html[:400].replace("\n", " ").replace("`", "'")
             diagnostics = (
-                f"HTML길이={len(html)}, 파싱방식={method}, "
-                f"파싱된상품수={len(items)}, 차단의심={blocked}"
+                f"HTTP상태={status}, HTML길이={len(html)}, 파싱방식={method}, "
+                f"파싱된상품수={len(items)}, 차단의심={blocked}\n"
+                f"응답미리보기: {snippet}"
             )
 
         message = build_message(matches, checked_at, TARGET_URL, TARGET_BRAND, TOP_N, diagnostics)
