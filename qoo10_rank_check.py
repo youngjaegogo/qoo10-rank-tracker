@@ -34,7 +34,11 @@ def fetch_html(url: str):
     resp = requests.get(url, headers=HEADERS, timeout=30)
     status = resp.status_code
     resp.raise_for_status()
-    return resp.text, status
+    # 서버가 charset을 명시하지 않으면 requests가 잘못 추정해 모지바케가 날 수 있어
+    # 실제 바이트로부터 인코딩을 다시 추정한다.
+    if not resp.encoding or resp.encoding.lower() in ("iso-8859-1", "iso-8859-9"):
+        resp.encoding = resp.apparent_encoding
+    return resp.text, status, len(resp.content)
 
 
 def looks_blocked(html: str) -> bool:
@@ -187,7 +191,7 @@ def main():
     checked_at = datetime.now(JST).strftime("%Y-%m-%d %H:%M")
 
     try:
-        html, status = fetch_html(TARGET_URL)
+        html, status, byte_len = fetch_html(TARGET_URL)
         blocked = looks_blocked(html)
         items, method = parse_ranking(html, TOP_N)
         matches = [it for it in items if TARGET_BRAND in it["text"]]
@@ -195,10 +199,12 @@ def main():
         diagnostics = None
         # 파싱된 상품이 하나도 없거나(=사실상 실패), 차단 의심일 때만 진단 정보 첨부
         if not items or blocked:
-            snippet = html[:400].replace("\n", " ").replace("`", "'")
+            # 응답이 작으면 전체를, 크면 앞부분만 보여준다
+            preview_len = len(html) if len(html) < 1800 else 800
+            snippet = html[:preview_len].replace("\n", " ").replace("`", "'")
             diagnostics = (
-                f"HTTP상태={status}, HTML길이={len(html)}, 파싱방식={method}, "
-                f"파싱된상품수={len(items)}, 차단의심={blocked}\n"
+                f"HTTP상태={status}, 바이트길이={byte_len}, 디코딩후글자수={len(html)}, "
+                f"파싱방식={method}, 파싱된상품수={len(items)}, 차단의심={blocked}\n"
                 f"응답미리보기: {snippet}"
             )
 
